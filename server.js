@@ -14,7 +14,7 @@ app.listen(app.get('port'), () => {
 
 app.use(cors());
 app.use(morgan());
-app.use(rateLimiter());
+app.use(rateLimiter({ requestLimit: 4, resetTime: 3000 }));
 
 app.get('/', (req, res) => {
   res.send('GETTTTTT');
