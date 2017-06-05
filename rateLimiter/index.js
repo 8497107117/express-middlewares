@@ -56,4 +56,9 @@ const rateLimiter = (config = { requestLimit: REQUEST_LIMIT, resetTime: RESET_TI
 		});
 };
 
-module.exports = rateLimiter;
+module.exports = {
+	getIPRemaing,
+	setIPRemaing,
+	checkLimit,
+	rateLimiter
+};
