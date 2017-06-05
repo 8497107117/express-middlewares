@@ -21,7 +21,66 @@ app.get('/', (req, res) => {
 });
 chai.use(chaiHttp);
 
-describe('behavior and integration w/ http', function () {
+
+describe('set info of ip to redis', function () {
+	describe('value of origin key is null', function () {
+		this.timeout(RESET_TIME + 3000);
+		it('it should set proper config and return config in promise', function (done) {
+			setIPRemaing('test', null, { requestLimit: REQUEST_LIMIT, resetTime: RESET_TIME })
+				.then(info => {
+					expect(typeof info).to.be.string('object');
+					expect(info.remaining).to.equal(REQUEST_LIMIT - 1);
+					expect((new Date().getTime() - info.resetTime.getTime()) < 100).to.be.true;
+					done();
+				});
+		});
+		it('it should reset the value of the key right after reset time', function (done) {
+			setTimeout(function () {
+				getIPRemaing('test')
+					.then(info => {
+						expect(typeof info).to.be.string('object');
+						expect(info).to.be.null;
+						done();
+					});
+			}, RESET_TIME);
+		});
+	});
+	describe('value of origin key is defined', function () {
+		let oldValue;
+		before(function (done) {
+			setIPRemaing('test', null, { requestLimit: REQUEST_LIMIT, resetTime: RESET_TIME })
+				.then(info => {
+					oldValue = info;
+					done();
+				});
+		});
+		this.timeout(RESET_TIME + 3000);
+		for (let i = 2; i < REQUEST_LIMIT + 4; i++) {
+			it(`it should set proper config and return config in promise: remaining = ${REQUEST_LIMIT - i} `, function (done) {
+				setIPRemaing('test', oldValue, { requestLimit: REQUEST_LIMIT, resetTime: RESET_TIME })
+					.then(info => {
+						expect(typeof info).to.be.string('object');
+						expect(info.remaining).to.equal(REQUEST_LIMIT - i);
+						expect((info.resetTime.getTime() - new Date().getTime()) > 0).to.be.true;
+						oldValue = info;
+						done();
+					});
+			});
+		}
+		it('it should reset the value of the key right after reset time', function (done) {
+			setTimeout(function () {
+				getIPRemaing('test')
+					.then(info => {
+						expect(typeof info).to.be.string('object');
+						expect(info).to.be.null;
+						done();
+					});
+			}, RESET_TIME);
+		});
+	});
+});
+
+describe('integration w/ http and redis', function () {
 	describe(`send request w/ request limit: ${REQUEST_LIMIT} and reset time: ${RESET_TIME}`, function () {
 		describe(`request ${REQUEST_LIMIT + 2} times`, function () {
 			for (let i = 1; i <= REQUEST_LIMIT + 2; i++) {
