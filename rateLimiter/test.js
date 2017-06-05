@@ -104,6 +104,8 @@ describe('integration w/ http and redis', function () {
 					chai.request(app)
 						.get('/')
 						.end(function (err, res) {
+							const resetTime = res.headers['x-ratelimit-reset'];
+							expect(new Date(resetTime).getTime()).to.be.above(new Date().getTime());
 							if (i > REQUEST_LIMIT) {
 								expect(res).to.have.status(429);
 								expect(res).to.have.header('X-RateLimit-Remaining', '0');
@@ -146,6 +148,8 @@ describe('integration w/ http and redis', function () {
 					chai.request(app)
 						.get('/')
 						.end(function (err, res) {
+							const resetTime = res.headers['x-ratelimit-reset'];
+							expect(new Date(resetTime).getTime()).to.be.above(new Date().getTime());
 							expect(res).to.have.status(429);
 							expect(res).to.have.header('X-RateLimit-Remaining', '0');
 							done();
